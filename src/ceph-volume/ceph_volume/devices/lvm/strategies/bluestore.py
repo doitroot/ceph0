@@ -275,11 +275,6 @@ class MixedType(object):
         else:
             db_vg = self.common_vg
 
-        # since we are falling back to a block_db_size that might be "as large
-        # as possible" we can't fully rely on LV format coming from the helper
-        # function that looks up this value
-        block_db_size = "%sG" % self.block_db_size.gb.as_int()
-
         # create 1 vg per data device first, mapping them to the device path,
         # when the lv gets created later, it can create as many as needed (or
         # even just 1)
@@ -296,11 +291,12 @@ class MixedType(object):
             data_lv_size = disk.Size(b=osd['data']['size']).gb.as_int()
             data_vg = data_vgs[data_path]
             data_lv_extents = data_vg.sizing(size=data_lv_size)['extents']
+            db_lv_extents = int(int(db_vg.vg_free_count) / self.dbs_needed)
             data_lv = lvm.create_lv(
                 'osd-block', data_vg.name, extents=data_lv_extents, uuid_name=True
             )
             db_lv = lvm.create_lv(
-                'osd-block-db', db_vg.name, size=block_db_size, uuid_name=True
+                'osd-block-db', db_vg.name, extents=db_lv_extents, uuid_name=True
             )
             command = [
                 '--bluestore',
