@@ -1364,22 +1364,22 @@ void PG::calc_replicated_acting(
       if ((uint64_t)approx_missing_objects >
           force_auth_primary_missing_objects) {
         primary = auth_log_shard;
-        ss << "up_primary: " << up_primary << ") has approximate "
+        ss << __func__ << "up_primary: " << up_primary << ") has approximate "
            << approx_missing_objects
            << "(>" << force_auth_primary_missing_objects <<") "
            << "missing objects, osd." << auth_log_shard_id
            << " selected as primary instead"
            << std::endl;
       } else {
-        ss << "up_primary: " << up_primary << ") selected as primary"
+        ss << __func__ << "up_primary: " << up_primary << ") selected as primary"
            << std::endl;
       }
     } else {
-      ss << "up_primary: " << up_primary << ") selected as primary" << std::endl;
+      ss << __func__ << "up_primary: " << up_primary << ") selected as primary" << std::endl;
     }
   } else {
     ceph_assert(!auth_log_shard->second.is_incomplete());
-    ss << "up[0] needs backfill, osd." << auth_log_shard_id
+    ss << __func__ << "up[0] needs backfill, osd." << auth_log_shard_id
        << " selected as primary instead" << std::endl;
     primary = auth_log_shard;
   }
@@ -1406,13 +1406,13 @@ void PG::calc_replicated_acting(
     const pg_info_t &cur_info = all_info.find(up_cand)->second;
     if (cur_info.is_incomplete() ||
         cur_info.last_update < oldest_auth_log_entry) {
-      ss << " shard " << up_cand << " (up) backfill " << cur_info << std::endl;
+      ss << __func__ << " shard " << up_cand << " (up) backfill " << cur_info << std::endl;
       backfill->insert(up_cand);
       acting_backfill->insert(up_cand);
     } else {
       want->push_back(i);
       acting_backfill->insert(up_cand);
-      ss << " osd." << i << " (up) accepted " << cur_info << std::endl;
+      ss << __func__ << " osd." << i << " (up) accepted " << cur_info << std::endl;
     }
     if (want->size() >= size) {
       break;
@@ -1420,6 +1420,7 @@ void PG::calc_replicated_acting(
   }
 
   if (want->size() >= size) {
+    ss << __func__ << " want->size() >= size of " << size << std::endl;
     return;
   }
 
@@ -1438,7 +1439,7 @@ void PG::calc_replicated_acting(
     const pg_info_t &cur_info = all_info.find(acting_cand)->second;
     if (cur_info.is_incomplete() ||
 	cur_info.last_update < oldest_auth_log_entry) {
-      ss << " shard " << acting_cand << " (acting) REJECTED "
+      ss << __func__ << " shard " << acting_cand << " (acting) REJECTED "
 	 << cur_info << std::endl;
     } else {
       candidate_by_last_update.emplace_back(cur_info.last_update, i);
@@ -1457,7 +1458,7 @@ void PG::calc_replicated_acting(
     want->push_back(p.second);
     pg_shard_t s = pg_shard_t(p.second, shard_id_t::NO_SHARD);
     acting_backfill->insert(s);
-    ss << " shard " << s << " (acting) accepted "
+    ss << __func__ << " shard " << s << " (acting) accepted "
        << all_info.find(s)->second << std::endl;
     if (want->size() >= size) {
       return;
@@ -1484,7 +1485,7 @@ void PG::calc_replicated_acting(
 
     if (i.second.is_incomplete() ||
 	i.second.last_update < oldest_auth_log_entry) {
-      ss << " shard " << i.first << " (stray) REJECTED " << i.second
+      ss << __func__ << " shard " << i.first << " (stray) REJECTED " << i.second
          << std::endl;
     } else {
       candidate_by_last_update.emplace_back(i.second.last_update, i.first.osd);
@@ -1493,6 +1494,7 @@ void PG::calc_replicated_acting(
 
   if (candidate_by_last_update.empty()) {
     // save us some effort
+    ss << __func__ << "  candidate_by_last_update is empty" << std::endl;
     return;
   }
 
@@ -1505,7 +1507,7 @@ void PG::calc_replicated_acting(
     want->push_back(p.second);
     pg_shard_t s = pg_shard_t(p.second, shard_id_t::NO_SHARD);
     acting_backfill->insert(s);
-    ss << " shard " << s << " (stray) accepted "
+    ss << __func__ << " shard " << s << " (stray) accepted "
        << all_info.find(s)->second << std::endl;
     if (want->size() >= size) {
       return;
