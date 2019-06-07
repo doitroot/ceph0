@@ -203,6 +203,7 @@ def task(ctx, config):
 
     thrasher = RBDMirrorThrasher(ctx, config, cluster, daemons)
     thrasher.start()
+    ctx.ceph[config['cluster']].thrashers.append(thrasher)
 
     try:
         log.debug('Yielding')

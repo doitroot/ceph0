@@ -333,6 +333,7 @@ def task(ctx, config):
     thrash_proc = MonitorThrasher(ctx,
         manager, config,
         logger=log.getChild('mon_thrasher'))
+    ctx.ceph[config['cluster']].thrashers.append(thrash_proc)
     try:
         log.debug('Yielding')
         yield
