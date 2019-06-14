@@ -28,6 +28,7 @@ from teuthology.orchestra import run
 import ceph_client as cclient
 from teuthology.orchestra.daemon import DaemonGroup
 from tasks.daemonwatchdog import DaemonWatchdog
+from gevent import sleep
 
 CEPH_ROLE_TYPES = ['mon', 'mgr', 'osd', 'mds', 'rgw']
 DATA_PATH = '/var/lib/ceph/{type_}/{cluster}-{id_}'
@@ -1962,3 +1963,13 @@ def task(ctx, config):
                     '--no-mon-health-to-clog',
                 ]
             )
+
+            #Try testwatchdog 5 times
+            i = 0
+            while True:
+                if i > 4:
+                    break
+
+                ctx.ceph[config['cluster']].watchdog.stupid_watchdog_tester()
+                sleep(20)
+                i += 1
