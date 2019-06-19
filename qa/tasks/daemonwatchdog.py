@@ -98,6 +98,7 @@ class DaemonWatchdog(Greenlet):
                 self.log("daemon {name} is failed for ~{t:.0f}s".format(name=name, t=delta))
                 if delta > daemon_timeout:
                     bark = True
+                    self.log("bark=True")
 
             # If a daemon is no longer failed, remove it from tracking:
             for name in daemon_failure_time.keys():
@@ -109,10 +110,13 @@ class DaemonWatchdog(Greenlet):
                 if thrasher.e is not None:
                     self.log("thrasher on fs.{name} failed".format(name=thrasher.fs.name))
                     bark = True
+                    self.log("bark=True")
 
             if bark:
                 self.bark()
                 return
+            else:
+                self.log("bark=False")
 
             sleep(5)
 
