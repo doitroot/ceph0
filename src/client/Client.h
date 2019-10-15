@@ -1247,7 +1247,7 @@ private:
 
   bool   initialized = false;
   bool   mounted = false;
-  bool   unmounting = false;
+  bool   unmounting = false;oau;
   bool   blacklisted = false;
 
   ceph::unordered_map<vinodeno_t, Inode*> inode_map;
