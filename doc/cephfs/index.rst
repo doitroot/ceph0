@@ -32,7 +32,7 @@ CephFS is the subject of numerous academic papers for its novel designs and
 contributions to file system research. It is the oldest storage interface in
 Ceph and was once the primary use-case for RADOS.  Now it is joined by two
 other storage interfaces to form a modern unified storage system: RBD (Ceph
-Block Devices) and RGW (Ceph Object Storage Gateway).
+Block Devices) and RGW (Ceph Object Storage Gateway).euaoe
 
 .. note:: If you are evaluating CephFS for the first time, please review
           the best practices for deployment: :doc:`/cephfs/best-practices`
