@@ -470,7 +470,11 @@ void OpenFileTable::commit(MDSInternalContextBase *c, uint64_t log_seq, int op_p
 	}
 	if (omap_idx < 0) {
 	  ++omap_num_objs;
-	  assert(omap_num_objs <= MAX_OBJECTS);
+         if (omap_num_objs > MAX_OBJECTS) {
+           dout(0) << "omap_num_objs " << omap_num_objs << dendl;
+           dout(0) << "anchor_map size " << anchor_map.size() << dendl;
+           assert(omap_num_objs <= MAX_OBJECTS);
+         }
 	  omap_num_items.resize(omap_num_objs);
 	  omap_updates.resize(omap_num_objs);
 	  omap_updates.back().clear = true;
