@@ -18,7 +18,8 @@ import multiprocessing.pool
 import shutil
 import subprocess
 
-from ceph.deployment import inventory
+from ceph.deployment import inventory, translate
+from ceph.deployment.drive_selection import selector
 from mgr_module import MgrModule
 import orchestrator
 from orchestrator import OrchestratorError, HostSpec, OrchestratorValidationError
@@ -816,6 +817,7 @@ class CephadmOrchestrator(MgrModule, orchestrator.Orchestrator):
         return self._refresh_host_services(wait_for_args).then(
             _get_services_result)
 
+
     def describe_service(self, service_type=None, service_id=None,
                          node_name=None, refresh=False):
         if service_type not in ("mds", "osd", "mgr", "mon", 'rgw', "nfs", None):
@@ -832,6 +834,8 @@ class CephadmOrchestrator(MgrModule, orchestrator.Orchestrator):
                        service_id=None):
         self.log.debug('service_action action %s type %s name %s id %s' % (
             action, service_type, service_name, service_id))
+        if action == 'reload':
+            return trivial_result(["Reload is a no-op"])
 
         def _proc_daemons(daemons):
             if service_name is None and service_id is None:
@@ -950,6 +954,7 @@ class CephadmOrchestrator(MgrModule, orchestrator.Orchestrator):
 
         host = drive_group.hosts(all_hosts)[0]
         self._require_hosts(host)
+
 
         # get bootstrap key
         ret, keyring, err = self.mon_command({
