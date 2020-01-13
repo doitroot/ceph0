@@ -99,15 +99,15 @@ class DriveSelection(object):
             logger.debug('device_filter is None')
             return []
         devices = list()  # type: List[Device]
-        for _filter in FilterGenerator(device_filter):
-            if not _filter.is_matchable:
-                logger.debug(
-                    "Ignoring disk {}. Filter is not matchable".format(
-                        device_filter))
-                continue
+        for disk in self.disks.devices:
+            logger.debug("Processing disk {}".format(disk.path))
 
-            for disk in self.disks.devices:
-                logger.debug("Processing disk {}".format(disk.path))
+            for _filter in FilterGenerator(device_filter):
+                if not _filter.is_matchable:
+                    logger.debug(
+                        "Ignoring disk {}. Filter is not matchable".format(
+                            device_filter))
+                    continue
 
                 # continue criterias
                 assert _filter.matcher is not None
@@ -115,13 +115,13 @@ class DriveSelection(object):
                     logger.debug(
                         "Ignoring disk {}. Filter did not match".format(
                             disk.path))
-                    continue
+                    break
 
                 if not self._has_mandatory_idents(disk):
                     logger.debug(
                         "Ignoring disk {}. Missing mandatory idents".format(
                             disk.path))
-                    continue
+                    break
 
                 # break on this condition.
                 if self._limit_reached(device_filter, len(devices), disk.path):
