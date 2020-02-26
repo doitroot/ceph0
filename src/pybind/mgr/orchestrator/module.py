@@ -23,7 +23,7 @@ from mgr_module import MgrModule, HandleCommandResult
 from ._interface import OrchestratorClientMixin, DeviceLightLoc, _cli_read_command, \
     raise_if_exception, _cli_write_command, TrivialReadCompletion, OrchestratorError, \
     NoOrchestrator, ServiceSpec, PlacementSpec, OrchestratorValidationError, NFSServiceSpec, \
-    RGWSpec, InventoryFilter, InventoryHost, HostPlacementSpec, HostSpec, CLICommandMeta
+    RGWSpec, InventoryFilter, InventoryHost, HostPlacementSpec, HostSpec, CLICommandMeta, ServiceSpecs
 
 
 @six.add_metaclass(CLICommandMeta)
@@ -492,6 +492,15 @@ Usage:
         return HandleCommandResult(stdout=completion.result_str())
 
     @_cli_write_command(
+        'orch apply',
+        desc='Applies a Service Specification from a file. ceph orch apply -i $file')
+    def _apply_services(self, inbuf):
+        completion = self.save_service_config(inbuf)
+        self._orchestrator_wait([completion])
+        raise_if_exception(completion)
+        return HandleCommandResult(stdout=completion.result_str())
+
+    @_cli_write_command(
         'orch daemon add rbd-mirror',
         "name=num,type=CephInt,req=false "
         "name=hosts,type=CephString,n=N,req=false",
@@ -653,6 +662,26 @@ Usage:
         return HandleCommandResult(stdout=completion.result_str())
 
     @_cli_write_command(
+        'orch servicespecs ls',
+        desc='List all Service specs')
+    def _get_service_specs(self):
+        completion = self.list_specs()
+        self._orchestrator_wait([completion])
+        raise_if_exception(completion)
+        # TODO: dump json/yaml to file
+        return HandleCommandResult(stdout=completion.result_str())
+
+    @_cli_write_command(
+        'orch servicespecs clear',
+        desc='Clear all Service specs')
+    def _clear_service_specs(self):
+        completion = self.clear_all_specs()
+        self._orchestrator_wait([completion])
+        raise_if_exception(completion)
+        return HandleCommandResult(stdout=completion.result_str())
+
+
+    @_cli_write_command(
         'orch apply mgr',
         "name=num,type=CephInt,req=false "
         "name=hosts,type=CephString,n=N,req=false "
@@ -700,11 +729,10 @@ Usage:
     def _apply_mds(self, fs_name, num=None, label=None, hosts=[]):
         placement = PlacementSpec(label=label, count=num, hosts=hosts)
         placement.validate()
-
         spec = ServiceSpec(
-            fs_name,
+            service_type='mds',
+            name=fs_name,
             placement=placement)
-
         completion = self.apply_mds(spec)
         self._orchestrator_wait([completion])
         raise_if_exception(completion)
@@ -718,7 +746,8 @@ Usage:
         'Update the number of rbd-mirror instances')
     def _apply_rbd_mirror(self, num, label=None, hosts=[]):
         spec = ServiceSpec(
-            placement=PlacementSpec(hosts=hosts, count=num, label=label))
+            placement=PlacementSpec(hosts=hosts, count=num, label=label),
+            service_type='rbd-mirror')
         completion = self.apply_rbd_mirror(spec)
         self._orchestrator_wait([completion])
         raise_if_exception(completion)
@@ -734,6 +763,7 @@ Usage:
         'Update the number of RGW instances for the given zone')
     def _apply_rgw(self, zone_name, realm_name, num=None, label=None, hosts=[]):
         spec = RGWSpec(
+            service_type='rgw',
             rgw_realm=realm_name,
             rgw_zone=zone_name,
             placement=PlacementSpec(hosts=hosts, label=label, count=num))
@@ -769,6 +799,7 @@ Usage:
         # type: (Optional[int], Optional[str], List[str]) -> HandleCommandResult
         spec = ServiceSpec(
             placement=PlacementSpec(label=label, hosts=hosts, count=num),
+            service_type='prometheus'
         )
         completion = self.apply_prometheus(spec)
         self._orchestrator_wait([completion])
@@ -784,6 +815,7 @@ Usage:
         # type: (Optional[int], Optional[str], List[str]) -> HandleCommandResult
         spec = ServiceSpec(
             placement=PlacementSpec(label=label, hosts=hosts, count=num),
+            service_type='node-exporter'
         )
         completion = self.apply_node_exporter(spec)
         self._orchestrator_wait([completion])
