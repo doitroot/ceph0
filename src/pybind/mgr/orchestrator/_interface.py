@@ -914,7 +914,7 @@ class Orchestrator(object):
         """
         raise NotImplementedError()
 
-    def save_service_config(self, specs: List[str]) -> Completion:
+    def apply_service_config(self, specs: List[str]) -> Completion:
         """
         Saves Service Specs from a yaml|json file
         """
@@ -1510,6 +1510,7 @@ class ServiceSpec(object):
         #: within one ceph cluster. Note: Not all clusters have a name
         self.name = name  # type: Optional[str]
 
+        assert service_type
         self.service_type = service_type
 
         if self.placement is not None and self.placement.count is not None:
@@ -1519,12 +1520,20 @@ class ServiceSpec(object):
             self.count = 1
 
     @classmethod
-    def from_json(cls, json_spec: dict):  # why is -> ServiceSpec unresolvable?
+    def from_json(cls, json_spec: dict) -> "ServiceSpec":
         """
         Initialize 'ServiceSpec' object data from a json structure
         :param json_spec: A valid dict with a the Service settings
         """
         args = {}
+        service_type = json_spec.get('service_type', '')
+        assert service_type
+        if service_type == 'rgw':
+            _cls = RGWSpec
+        elif service_type == 'nfs':
+            _cls = NFSServiceSpec
+        else:
+            _cls = ServiceSpec
         for k, v in json_spec.items():
             if k == 'placement':
                 v = PlacementSpec.from_dict(v)
@@ -1532,7 +1541,7 @@ class ServiceSpec(object):
                 args.update(v)
                 continue
             args.update({k: v})
-        return cls(**args)
+        return _cls(**args)
 
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__,
@@ -1565,8 +1574,8 @@ def servicespec_validate_hosts_have_network_spec(self: ServiceSpec):
 
 
 class NFSServiceSpec(ServiceSpec):
-    def __init__(self, name, pool=None, namespace=None, placement=None):
-        super(NFSServiceSpec, self).__init__(name=name, placement=placement)
+    def __init__(self, name, pool=None, namespace=None, placement=None, service_type=None):
+        super(NFSServiceSpec, self).__init__(name=name, placement=placement, service_type=service_type)
 
         #: RADOS pool where NFS client recovery data is stored.
         self.pool = pool
@@ -1955,29 +1964,3 @@ class OutdatablePersistentDict(OutdatableDictMixin, PersistentStoreDict):
 class OutdatableDict(OutdatableDictMixin, dict):
     pass
 
-
-class ServiceSpecs(object):
-    # TODO: assign a weight/order based on the service_type
-    # this may help us to figure out which services are more important than others
-    # We may sort by order/weight and then deploy in that order
-
-    @staticmethod
-    def construct(json_specs):
-        specs = list()
-        for json_spec in json_specs:
-            if isinstance(json_spec, str):
-                json_spec = json.loads(json_spec)
-            if not json_spec:
-                continue
-            if json_spec.get('service_type', '') == 'rgw':
-                spec = RGWSpec.from_json(json_spec)
-            elif json_spec.get('service_type', '') == 'nfs':
-                spec = NFSServiceSpec.from_json(json_spec)
-                continue
-            elif json_spec.get('service_type', '') == 'osd':
-                # Move to create_osds
-                continue
-            else:
-                spec = ServiceSpec.from_json(json_spec)
-            specs.append(spec)
-        return specs

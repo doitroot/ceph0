@@ -33,7 +33,7 @@ from ceph.deployment.drive_selection import selector
 from mgr_module import MgrModule
 import orchestrator
 from orchestrator import OrchestratorError, HostPlacementSpec, OrchestratorValidationError, HostSpec, \
-    CLICommandMeta, ServiceSpecs, ServiceSpec
+    CLICommandMeta, ServiceSpec
 
 from . import remotes
 
@@ -2426,7 +2426,7 @@ scrape_configs:
         self.event.set()
         return trivial_result('Stopped upgrade to %s' % target_name)
 
-    def save_spec(self, spec: ServiceSpec) -> None:
+    def save_spec(self, json_spec: dict) -> None:
         """
         Attempts to save a ServiceSpec. Raises `OrchestratorError` if
         an entry with the identifier already exist.
@@ -2440,7 +2440,7 @@ scrape_configs:
         If these entries interfere, one would overwrite the other and vice versa.
         Having the mentioned safeguard in place will prevent overwrites from two different sources.
         """
-        json_spec = spec.to_json()
+        spec: ServiceSpec = ServiceSpec.from_json(json_spec)
         store = PersistentStoreDict(self, f'service_spec/{spec.service_type}')
         name: str = spec.name or spec.service_type
         try:
@@ -2468,19 +2468,16 @@ scrape_configs:
         self.service_spec_store.clear()
         return trivial_result(f"Mon store for {self.service_spec_store.prefix} cleared")
 
-    def save_service_config(self, inbuf: str) -> orchestrator.Completion:
+    def apply_service_config(self, inbuf: str) -> orchestrator.Completion:
         """
         Parse a multi document yaml file (represented in a inbuf object)
         and loads it with it's respective ServiceSpec to validate the
         initial input.
         If no errors are raised `save_spec` is called.
         """
-        content = yaml.load_all(inbuf)
+        content: dict = yaml.load_all(inbuf)
         # Load all specs from a multi document yaml file.
-        # This is mainly to catch any errors in the ServiceSpecs
-        specs = ServiceSpecs.construct(content)
-        # and save them in a separate store section
-        for spec in specs:
+        for spec in content:
             self.save_spec(spec)
         self._kick_serve_loop()
         return trivial_result("ServiceSpecs saved")
@@ -2504,7 +2501,7 @@ scrape_configs:
         Inspects the mon_store and gathers entries for the `find_service_type`
         (i.e. 'mgr', 'rgw') service.
         Some services have individual ServiceSpecs (rgw->RGWSpec, nfs->NFSServiceSpec)
-        so we need to make the distinction in ServiceSpecs.
+        so we need to make the distinction.
         """
         specs = list()
         self.log.debug(f"Checking for type {find_service_type}")
@@ -2518,9 +2515,9 @@ scrape_configs:
                 json_specs = json.loads(json_specs)
 
             self.log.debug(f"Found service_type: {service_type} in the k-v store. Adding..")
-            specs.append(json_specs)
+            specs.append(ServiceSpec.from_json(json_specs))
         self.log.debug(f"Found {specs} specs.")
-        return ServiceSpecs.construct(specs)
+        return specs
 
     def _apply_services(self) -> List[orchestrator.Completion]:
         """

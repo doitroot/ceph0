@@ -23,7 +23,7 @@ from mgr_module import MgrModule, HandleCommandResult
 from ._interface import OrchestratorClientMixin, DeviceLightLoc, _cli_read_command, \
     raise_if_exception, _cli_write_command, TrivialReadCompletion, OrchestratorError, \
     NoOrchestrator, ServiceSpec, PlacementSpec, OrchestratorValidationError, NFSServiceSpec, \
-    RGWSpec, InventoryFilter, InventoryHost, HostPlacementSpec, HostSpec, CLICommandMeta, ServiceSpecs
+    RGWSpec, InventoryFilter, InventoryHost, HostPlacementSpec, HostSpec, CLICommandMeta
 
 
 @six.add_metaclass(CLICommandMeta)
@@ -495,7 +495,7 @@ Usage:
         'orch apply',
         desc='Applies a Service Specification from a file. ceph orch apply -i $file')
     def _apply_services(self, inbuf):
-        completion = self.save_service_config(inbuf)
+        completion = self.apply_service_config(inbuf)
         self._orchestrator_wait([completion])
         raise_if_exception(completion)
         return HandleCommandResult(stdout=completion.result_str())
