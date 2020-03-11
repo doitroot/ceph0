@@ -9,9 +9,8 @@ from ceph.deployment.drive_group import DriveGroupSpec, DeviceSelection, \
 
 def test_DriveGroup():
     dg_json = {'host_pattern': 'hostname',
-                'name': 'testing_drivegroup',
-                'data_devices': {'paths': ['/dev/sda']}
-              }
+               'name': 'testing_drivegroup',
+               'data_devices': {'paths': ['/dev/sda']}}
 
     dg = DriveGroupSpec.from_json(dg_json)
     assert dg.hosts(['hostname']) == ['hostname']

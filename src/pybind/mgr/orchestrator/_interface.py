@@ -996,12 +996,6 @@ class Orchestrator(object):
         of OsdSpec: other fields are advisory/extensible for any
         finer-grained OSD feature enablement (choice of backing store,
         compression/encryption, etc).
-
-        :param drive_groups: a list of DriveGroupSpec
-        :param all_hosts: TODO, this is required because the orchestrator methods are not composable
-                Probably this parameter can be easily removed because each orchestrator can use
-                the "get_inventory" method and the "drive_group.host_pattern" attribute
-                to obtain the list of hosts where to apply the operation
         """
         raise NotImplementedError()
 

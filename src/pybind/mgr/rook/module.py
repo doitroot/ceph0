@@ -362,8 +362,8 @@ class RookOrchestrator(MgrModule, orchestrator.Orchestrator):
             mgr=self
         )
 
-    def create_osds(self, drive_groups):
-        # type: (List[DriveGroupSpec]) -> RookCompletion
+    def create_osds(self, spec=None, drive_group=None):
+        # type: (Optional[OSDSpec] ,Optional[DriveGroupSpec]) -> RookCompletion
         """ Creates OSDs from a drive group specification.
 
         Caveat: Currently limited to a single DriveGroup.
@@ -377,7 +377,6 @@ class RookOrchestrator(MgrModule, orchestrator.Orchestrator):
 
         multiple times. The drivegroup file must only contain one spec at a time.
         """
-        drive_group = drive_groups[0]
 
         targets = []  # type: List[str]
         if drive_group.data_devices and drive_group.data_devices.paths:

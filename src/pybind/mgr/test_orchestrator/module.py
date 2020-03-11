@@ -233,8 +233,8 @@ class TestOrchestrator(MgrModule, orchestrator.Orchestrator):
 
         return list(filter(_filter_func, daemons))
 
-    def create_osds(self, drive_groups):
-        # type: (List[DriveGroupSpec]) -> TestCompletion
+    def create_osds(self, spec=None, drive_group=None):
+        # type: (Optional[OSDSpec], Optional[DriveGroupSpec]) -> List[str]
         """ Creates OSDs from a drive group specification.
 
         Caveat: Currently limited to a single DriveGroup.
@@ -244,11 +244,10 @@ class TestOrchestrator(MgrModule, orchestrator.Orchestrator):
         a single DriveGroup for now.
         You can work around it by invoking:
 
-        $: ceph orch osd create -i <dg.file>
+        $: ceph orch apply osd -i <dg.file>
 
         multiple times. The drivegroup file must only contain one spec at a time.
         """
-        drive_group = drive_groups[0]
 
         def run(all_hosts):
             # type: (List[orchestrator.HostSpec]) -> None

@@ -1915,9 +1915,9 @@ class CephadmOrchestrator(orchestrator.Orchestrator, MgrModule):
 
     def create_osds(self, spec: Optional[OSDSpec] = None,
                     dg: Optional[DriveGroupSpec] = None) -> List[str]:
-        if not spec and not dg:
-            raise OrchestratorError("You just either provide a ServiceSpec or a DriveGroup")
-        if not dg and spec:
+        if not (spec or dg):
+            raise OrchestratorError("You must either provide a ServiceSpec or a DriveGroup")
+        if not (dg or not spec):
             dg = DriveGroupSpec.from_json(spec.drivegroup)
         return self._prepare_deployment(self.cache.get_hosts(), dg)
 
